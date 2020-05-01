@@ -162,38 +162,56 @@ int main()
           printf("Error: No file system with the given name is found.\n");
           continue;
         }
-        if(file_open == 1)
+        else if(file_open == 1)
         {
-          printf("Error: File system with the given names is alread open.\n");
+          printf("Error: File system with the given names is already open.\n");
           continue;
         }
-        
-        fseek(ptr_file,11,SEEK_SET);
-        fread(&BPB_BytesPerSec, 2, 1, ptr_file);
-
-        fseek(ptr_file, 13, SEEK_SET);
-        fread(&BPB_SecPerClus, 1, 1, ptr_file);
-
-        fseek(ptr_file, 14, SEEK_SET);
-        fread(&BPB_RsvdSecCnt, 1, 2, ptr_file); 
-
-        fseek(ptr_file, 16, SEEK_SET);
-        fread(&BPB_NumFATs, 1, 1, ptr_file);
-
-        fseek(ptr_file, 36, SEEK_SET);
-        fread(&BPB_FATSz32, 1, 4, ptr_file);
-
-        root_address = (BPB_BytesPerSec* BPB_RsvdSecCnt)+(BPB_NumFATs * BPB_FATSz32 * BPB_BytesPerSec);
-
-        fseek(ptr_file,root_address,SEEK_SET);
-        int i = 0;
-        for(i = 0; i < 16; i++)
+        else
         {
-          fread(&dir[i],sizeof(dir[i]),1,ptr_file);  
-        }
+          fseek(ptr_file,11,SEEK_SET);
+          fread(&BPB_BytesPerSec, 2, 1, ptr_file);
 
-        printf("File successfully opened!!\n");
-        file_open = 1;   
+          fseek(ptr_file, 13, SEEK_SET);
+          fread(&BPB_SecPerClus, 1, 1, ptr_file);
+
+          fseek(ptr_file, 14, SEEK_SET);
+          fread(&BPB_RsvdSecCnt, 1, 2, ptr_file); 
+
+          fseek(ptr_file, 16, SEEK_SET);
+          fread(&BPB_NumFATs, 1, 1, ptr_file);
+
+          fseek(ptr_file, 36, SEEK_SET);
+          fread(&BPB_FATSz32, 1, 4, ptr_file);
+
+          root_address = (BPB_BytesPerSec* BPB_RsvdSecCnt)+(BPB_NumFATs * BPB_FATSz32 * BPB_BytesPerSec);
+
+          fseek(ptr_file,root_address,SEEK_SET);
+          int i = 0;
+          for(i = 0; i < 16; i++)
+          {
+            fread(&dir[i],sizeof(dir[i]),1,ptr_file);  
+          }
+
+          //printf("%d\n",file_open);
+          printf("File successfully opened!!\n");
+          file_open = 1;  
+          //printf("%d\n",file_open);  
+        }
+      }
+    }
+    else if(strcmp("close",token[0])== 0)
+    {
+      if(file_open == 0|| token[1] == NULL)
+      {
+        printf("Error: No file system with the given name is open.\n");
+        continue;
+      }
+      else
+      {
+        fclose(ptr_file);
+        printf("File successfully closed!\n");
+        file_open = 0;
       }
     }
     free( working_root );
