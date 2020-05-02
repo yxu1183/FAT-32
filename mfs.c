@@ -90,6 +90,34 @@ int compare(char IMG_Name[MAX_IMAGE_FILE_NAME],char input[MAX_IMAGE_FILE_NAME] )
   return 0;
 }
 
+void decToHex(int decimal, char *temp)
+{
+  char hexadecimal[150];
+  int i ,j = 0;
+  int remainder = 0;
+  printf("%s : ",temp);
+  while(decimal!=0)
+  {
+    remainder = decimal%16;
+    if(remainder<10)
+    {
+      hexadecimal[i] = 48 + remainder;
+      i++;
+    }
+    else
+    {
+      hexadecimal[i]= 55 + remainder;
+      i++;
+    }
+    decimal = decimal/16;
+  }
+  for(j=i-1; j>= 0; j--)
+  {
+    printf("%c",hexadecimal[j]);
+  }
+  printf("\n");
+}
+
 int main()
 {
   struct DirectoryEntry dir[16];
@@ -227,12 +255,41 @@ int main()
       }
     }
 
+    else if (strcmp("info",token[0])==0)
+    {
+      printf("BPB_BytesPerSec : %d\n", BPB_BytesPerSec);
+      decToHex(BPB_BytesPerSec,"BPB_BytesPersec");
+      printf("\n");
+
+      printf("BPB_SecPerClus : %d\n", BPB_SecPerClus);
+      decToHex(BPB_SecPerClus,"BPB_SecPerClus");
+      printf("\n");
+
+      printf("BPB_RsvdSecCnt : %d\n", BPB_RsvdSecCnt);
+      decToHex(BPB_RsvdSecCnt,"BPB_RsvdSecCnt");
+      printf("\n");
+
+      printf("BPB_NumFATs : %d\n", BPB_NumFATs);
+      decToHex(BPB_NumFATs,"BPB_NumFATs");
+      printf("\n");
+
+      printf("BPB_FATSz32 : %d\n", BPB_FATSz32);
+      decToHex(BPB_FATSz32,"BPB_FATSz32");
+      printf("\n");
+      
+      continue;
+    }
+    else if(strcmp("ls",token[0])==0)
+    {
+
+    }
+
     else if(strcmp("exit",token[0])== 0)
     {
-      //fclose(ptr_file);
       printf("Bye! Exiting....\n");
       return 0;
     }
+
     else
     {
       printf("Invalid Command.\n");
