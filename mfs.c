@@ -208,7 +208,8 @@ int main()
         }
       }
     }
-    if(strcmp("close",token[0])== 0)
+
+    else if(strcmp("close",token[0])== 0)
     {
       int i = 0;
       for(i = 0; i < file_counter; i++)
@@ -225,6 +226,20 @@ int main()
         }
       }
     }
+
+    else if(strcmp("exit",token[0])== 0)
+    {
+      //fclose(ptr_file);
+      printf("Bye! Exiting....\n");
+      return 0;
+    }
+    else
+    {
+      printf("Invalid Command.\n");
+      continue;
+    }
+    
+
     free(working_root);
   }
   return 0;
