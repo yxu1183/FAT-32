@@ -49,7 +49,9 @@ int32_t RootDirSectors = 0;
 int32_t FirstDataSector = 0;
 int32_t FirstSectorofCluster = 0;
 int32_t root_address;
-int file_open = 0;
+char file_open[MAX_IMAGE_FILE_NAME][MAX_COMMAND_SIZE];
+int file_counter = 0;
+int open_file = 0;
 
 int LBAToOffset(int sector)
 {
@@ -142,6 +144,7 @@ int main()
     // {
     //   printf("token[%d] = %s\n", token_index, token[token_index] );  
     // }
+    
     if(token[0] == NULL)
     {
       continue;
@@ -162,13 +165,14 @@ int main()
           printf("Error: No file system with the given name is found.\n");
           continue;
         }
-        else if(file_open == 1)
+        else if(open_file == 1)
         {
           printf("Error: File system with the given names is already open.\n");
           continue;
         }
         else
         {
+          file_counter++;
           fseek(ptr_file,11,SEEK_SET);
           fread(&BPB_BytesPerSec, 2, 1, ptr_file);
 
@@ -195,26 +199,34 @@ int main()
 
           //printf("%d\n",file_open);
           printf("File successfully opened!!\n");
-          file_open = 1;  
+          for(i= 0; i < file_counter; i++)
+          {
+            strcpy(file_open[i],token[1]);
+          }  
+          open_file = 1;
           //printf("%d\n",file_open);  
         }
       }
     }
-    else if(strcmp("close",token[0])== 0)
+    if(strcmp("close",token[0])== 0)
     {
-      if(file_open == 0|| token[1] == NULL)
+      int i = 0;
+      for(i = 0; i < file_counter; i++)
       {
-        printf("Error: No file system with the given name is open.\n");
-        continue;
-      }
-      else
-      {
-        fclose(ptr_file);
-        printf("File successfully closed!\n");
-        file_open = 0;
+        if(token[1] == NULL || strcmp(file_open[i],token[1]) !=0)
+        {
+          printf("Error: No file system with the given name is open.\n");
+          continue;
+        }
+        else
+        {
+          fclose(ptr_file);
+          printf("File successfully closed!\n");
+        }
       }
     }
-    free( working_root );
+    free(working_root);
   }
   return 0;
 }
+
