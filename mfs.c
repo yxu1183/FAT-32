@@ -254,7 +254,7 @@ int main()
       break;
     }
 
-    else if(((strcmp("info", token[0]) == 0) || (strcmp("stat", token[0]) == 0)) && (open_file == 0))
+    else if(((strcmp("info", token[0]) == 0) || (strcmp("stat", token[0]) == 0) || (strcmp("ls",token[0])==0) || (strcmp("cd",token[0])==0) || (strcmp("get",token[0])==0) || (strcmp("read",token[0])==0)) && (open_file == 0))
     {
       printf("Error: File not opened. Please open the file first.\n");
     }
@@ -314,8 +314,24 @@ int main()
         else
         {
           printf("Error: Please enter file name or dir name!\n");
-          continue;
         }
+        continue;
+      }
+      else if(strcmp("ls",token[0])==0)
+      {
+
+      }
+      else if(strcmp("cd",token[0])==0)
+      {
+
+      }
+      else if(strcmp("get",token[0])==0)
+      {
+
+      }
+      else if(strcmp("read",token[0])==0)
+      {
+
       }
     }
     else
