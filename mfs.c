@@ -223,6 +223,10 @@ int main()
 
     else if (strcmp("exit", token[0]) == 0)
     {
+      if(open_file == 1)
+      {
+        fclose(ptr_file);
+      }
       printf("Bye! Exiting....\n");
       break;
     }
@@ -235,7 +239,10 @@ int main()
       printf("Error: File system must be opened first.\n");
     }
 
-    else if (open_file != 0)
+    else if (((strcmp("info", token[0]) == 0) || (strcmp("stat", token[0]) == 0) ||
+              (strcmp("ls", token[0]) == 0) || (strcmp("cd", token[0]) == 0) ||
+              (strcmp("get", token[0]) == 0) || (strcmp("read", token[0]) == 0)) &&
+             (open_file == 1))
     {
       if (strcmp("info", token[0]) == 0)
       {
@@ -307,6 +314,7 @@ int main()
           }
           i++;
         }
+        continue;
       }
       else if (strcmp("cd", token[0]) == 0)
       {
@@ -320,7 +328,7 @@ int main()
     }
     else
     {
-      printf("Invalid Command.\n");
+      printf("Error: Invalid Command.\n");
       continue;
     }
     free(working_root);
