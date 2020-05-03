@@ -272,24 +272,42 @@ int main()
       {
         if (token[1] != NULL)
         {
-          int find = 0;
-          char new_token[12];
-          strncpy(new_token, token[1], strlen(token[1]));
-
           int i = 0;
+          int compare_value = -1;
           while (i < 16)
           {
-            find = 0;
-            find = compare(dir[i].DIR_Name, new_token);
-            if (find == 1)
+            if (dir[i].DIR_Attr == 0x10 || dir[i].DIR_Attr == 0x20 || dir[i].DIR_Attr == 0x01)
             {
-              printf("Attribute\tSize\tStarting Cluster Number\n");
-              printf("%d\t\t%d\t%d\n\n", dir[i].DIR_Attr, dir[i].DIR_FileSize, dir[i].DIR_FirstClusterLow);
-              break;
+              char word[100];
+              strncpy(word, token[1], strlen(token[1]));
+
+              // if (!strcmp(token[1], ".") || !strcmp(token[1], ".."))
+              // {
+              //   if (strstr(dir[i].DIR_Name, token[1]) != NULL)
+              //   {
+              //     // If the parent directory is the root directory, set the low cluster to 2.
+              //     if (dir[i].DIR_FirstClusterLow == 0)
+              //     {
+              //       dir[i].DIR_FirstClusterLow = 2;
+              //     }
+
+              //     printf("DIR_Name: %22s\nDIR_Attr: %13d\nDIR_FirstClusterLow: %d\nDIR_FileSize: %11d\n", temp2, dir[i].DIR_Attr, dir[i].DIR_FirstClusterLow, dir[i].DIR_FileSize);
+              //     found = 1;
+              //     break;
+              //   }
+              // }
+
+              if (compare(dir[i].DIR_Name, word))
+              {
+                printf("Attribute\tSize\tStarting Cluster Number\n");
+                printf("%d\t\t%d\t%d\n\n", dir[i].DIR_Attr, dir[i].DIR_FileSize, dir[i].DIR_FirstClusterLow);
+                compare_value = 1;
+              }
             }
             i++;
           }
-          if (find == 0)
+
+          if (compare_value == -1)
           {
             printf("Error: File not found.\n");
           }
