@@ -92,34 +92,6 @@ int compare(char *IMG_Name, char *input)
   }
 }
 
-void decToHex(int decimal, char *temp)
-{
-  char hexadecimal[150];
-  int i, j = 0;
-  int remainder = 0;
-  printf("%s : ", temp);
-  while (decimal != 0)
-  {
-    remainder = decimal % 16;
-    if (remainder < 10)
-    {
-      hexadecimal[i] = 48 + remainder;
-      i++;
-    }
-    else
-    {
-      hexadecimal[i] = 55 + remainder;
-      i++;
-    }
-    decimal = decimal / 16;
-  }
-  for (j = i - 1; j >= 0; j--)
-  {
-    printf("%c", hexadecimal[j]);
-  }
-  printf("\n");
-}
-
 int main()
 {
   struct DirectoryEntry dir[16];
@@ -228,14 +200,12 @@ int main()
             fread(&dir[i], sizeof(dir[i]), 1, ptr_file);
           }
 
-          //printf("%d\n",file_open);
           printf("File successfully opened!!\n");
           for (i = 0; i < file_counter; i++)
           {
             strcpy(file_open[i], token[1]);
           }
           open_file = 1;
-          //printf("%d\n",file_open);
         }
       }
     }
@@ -278,81 +248,76 @@ int main()
       continue;
     }
 
-    else if (strcmp("info", token[0]) == 0)
-    {
-      printf("BPB_BytesPerSec : %d\n", BPB_BytesPerSec);
-      decToHex(BPB_BytesPerSec, "BPB_BytesPersec");
-      printf("\n");
-
-      printf("BPB_SecPerClus : %d\n", BPB_SecPerClus);
-      decToHex(BPB_SecPerClus, "BPB_SecPerClus");
-      printf("\n");
-
-      printf("BPB_RsvdSecCnt : %d\n", BPB_RsvdSecCnt);
-      decToHex(BPB_RsvdSecCnt, "BPB_RsvdSecCnt");
-      printf("\n");
-
-      printf("BPB_NumFATs : %d\n", BPB_NumFATs);
-      decToHex(BPB_NumFATs, "BPB_NumFATs");
-      printf("\n");
-
-      printf("BPB_FATSz32 : %d\n", BPB_FATSz32);
-      decToHex(BPB_FATSz32, "BPB_FATSz32");
-      printf("\n");
-
-      continue;
-    }
-    else if (strcmp("stat", token[0]) == 0)
-    {
-      // int i;
-      // int found = -1;
-      // for (i = 0; i < 16; i++)
-      // {
-      //   if (dir[i].DIR_Attr == 0x01 || dir[i].DIR_Attr == 0x10 || dir[i].DIR_Attr == 0x20)
-      //   {
-      //     char temp[100];
-      //     strcpy(temp, token[1]);
-
-      //     char temp2[12];
-      //     memset(&temp2, 0, 12);
-      //     strncpy(temp2, dir[i].DIR_Name, 11);
-
-      //     if (!strcmp(token[1], ".") || !strcmp(token[1], ".."))
-      //     {
-      //       if (strstr(dir[i].DIR_Name, token[1]) != NULL)
-      //       {
-      //         // If the parent directory is the root directory, set the low cluster to 2.
-      //         if (dir[i].DIR_FirstClusterLow == 0)
-      //         {
-      //           dir[i].DIR_FirstClusterLow = 2;
-      //         }
-
-      //         printf("DIR_Name: %22s\nDIR_Attr: %13d\nDIR_FirstClusterLow: %d\nDIR_FileSize: %11d\n", temp2, dir[i].DIR_Attr, dir[i].DIR_FirstClusterLow, dir[i].DIR_FileSize);
-      //         found = 1;
-      //         break;
-      //       }
-      //     }
-
-      //     else if (compare(dir[i].DIR_Name, temp))
-      //     {
-      //       printf("DIR_Name: %22s\nDIR_Attr: %13d\nDIR_FirstClusterLow: %d\nDIR_FileSize: %11d\n", temp2, dir[i].DIR_Attr, dir[i].DIR_FirstClusterLow, dir[i].DIR_FileSize);
-      //       found = 1;
-      //     }
-      //   }
-      // }
-
-      // if (found == -1)
-      // {
-      //   printf("Error: File not found.\n");
-      // }
-    }
-
     else if (strcmp("exit", token[0]) == 0)
     {
       printf("Bye! Exiting....\n");
-      return 0;
+      break;
     }
 
+    else if(((strcmp("info", token[0]) == 0) || (strcmp("stat", token[0]) == 0)) && (open_file == 0))
+    {
+      printf("Error: File not opened. Please open the file first.\n");
+    }
+
+    else if (open_file != 0)
+    {
+      if (strcmp("info", token[0]) == 0)
+      {
+        printf("BPB_BytesPerSec : %d\n", BPB_BytesPerSec);
+        printf("BPB_BytesPerSec : %x\n", BPB_BytesPerSec);
+        printf("\n");
+
+        printf("BPB_SecPerClus : %d\n", BPB_SecPerClus);
+        printf("BPB_SecPerClus : %x\n", BPB_SecPerClus);
+        printf("\n");
+
+        printf("BPB_RsvdSecCnt : %d\n", BPB_RsvdSecCnt);
+        printf("BPB_RsvdSecCnt : %x\n", BPB_RsvdSecCnt);
+        printf("\n");
+
+        printf("BPB_NumFATs : %d\n", BPB_NumFATs);
+        printf("BPB_NumFATs : %x\n", BPB_NumFATs);
+        printf("\n");
+
+        printf("BPB_FATSz32 : %d\n", BPB_FATSz32);
+        printf("BPB_FATSz32 : %x\n", BPB_FATSz32);
+        printf("\n");
+
+        continue;
+      }  
+      else if (strcmp("stat", token[0]) == 0)
+      {
+        if (token[1] != NULL)
+        {
+          int find = 0;
+          char new_token[12];
+          strncpy(new_token, token[1], strlen(token[1]));
+
+          int i = 0;
+          while (i < 16)
+          {
+            find = 0;
+            find = compare(dir[i].DIR_Name, new_token);
+            if (find == 1)
+            {
+              printf("Attribute\tSize\tStarting Cluster Number\n");
+              printf("%d\t\t%d\t%d\n\n", dir[i].DIR_Attr, dir[i].DIR_FileSize, dir[i].DIR_FirstClusterLow);
+              break;
+            }
+            i++;
+          }
+          if (find == 0)
+          {
+            printf("Didn't find the file %s.\n", token[1]);
+          }
+        }
+        else
+        {
+          printf("Error: Please enter file name or dir name!\n");
+          continue;
+        }
+      }
+    }
     else
     {
       printf("Invalid Command.\n");
@@ -362,3 +327,4 @@ int main()
   }
   return 0;
 }
+
