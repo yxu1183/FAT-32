@@ -49,8 +49,8 @@ int32_t RootDirSectors = 0;
 int32_t FirstDataSector = 0;
 int32_t FirstSectorofCluster = 0;
 int32_t root_address;
-char file_open[MAX_SIZE_FILE][MAX_COMMAND_SIZE];
-int file_counter = 0;
+//char file_open[MAX_SIZE_FILE][MAX_COMMAND_SIZE];
+//int file_counter = 0;
 int open_file = 0;
 
 int LBAToOffset(int sector)
@@ -165,17 +165,16 @@ int main()
         ptr_file = fopen(token[1], "r");
         if (ptr_file == NULL)
         {
-          printf("Error: No file system with the given name is found.\n");
+          printf("Error: File system image not found.\n");
           continue;
         }
         else if (open_file == 1)
         {
-          printf("Error: File system with the given names is already open.\n");
+          printf("Error: File system image already open.\n");
           continue;
         }
         else
         {
-          file_counter++;
           fseek(ptr_file, 11, SEEK_SET);
           fread(&BPB_BytesPerSec, 2, 1, ptr_file);
 
@@ -201,10 +200,6 @@ int main()
           }
 
           printf("File successfully opened!!\n");
-          for (i = 0; i < file_counter; i++)
-          {
-            strcpy(file_open[i], token[1]);
-          }
           open_file = 1;
         }
       }
@@ -212,38 +207,16 @@ int main()
 
     else if (strcmp("close", token[0]) == 0)
     {
-      int close = 0;
-      if (token[1] == NULL)
+      if (open_file == 1)
       {
-        printf("Error: No file system with the given name is open.\n");
+        fclose(ptr_file);
+        ptr_file = NULL;
+        printf("File successfully closed!!\n");
+        open_file = 0;
       }
       else
       {
-        int i = 0;
-        for (i = 0; i < file_counter; i++)
-        {
-          if (strcmp(file_open[i], token[1]) == 0)
-          {
-            close = 1;
-            break;
-          }
-        }
-        if (close == 1 && i < file_counter)
-        {
-          file_counter--;
-          int j = 0;
-          for (j = i; j < file_counter; j++)
-          {
-            file_open[j][MAX_COMMAND_SIZE] = file_open[j + 1][MAX_COMMAND_SIZE];
-          }
-          fclose(ptr_file);
-          open_file = 0;
-          printf("File successfully closed!!\n");
-        }
-        else
-        {
-          printf("Error: No file system with the given name is open.\n");
-        }
+        printf("Error: File system not open.\n");
       }
       continue;
     }
@@ -254,9 +227,12 @@ int main()
       break;
     }
 
-    else if(((strcmp("info", token[0]) == 0) || (strcmp("stat", token[0]) == 0) || (strcmp("ls",token[0])==0) || (strcmp("cd",token[0])==0) || (strcmp("get",token[0])==0) || (strcmp("read",token[0])==0)) && (open_file == 0))
+    else if (((strcmp("info", token[0]) == 0) || (strcmp("stat", token[0]) == 0) ||
+              (strcmp("ls", token[0]) == 0) || (strcmp("cd", token[0]) == 0) ||
+              (strcmp("get", token[0]) == 0) || (strcmp("read", token[0]) == 0)) &&
+             (open_file == 0))
     {
-      printf("Error: File not opened. Please open the file first.\n");
+      printf("Error: File system must be opened first.\n");
     }
 
     else if (open_file != 0)
@@ -284,7 +260,7 @@ int main()
         printf("\n");
 
         continue;
-      }  
+      }
       else if (strcmp("stat", token[0]) == 0)
       {
         if (token[1] != NULL)
@@ -317,21 +293,29 @@ int main()
         }
         continue;
       }
-      else if(strcmp("ls",token[0])==0)
+      else if (strcmp("ls", token[0]) == 0)
       {
-
+        int i = 0;
+        char token[0];
+        memset(&token, 0, 12);
+        while (i < 16)
+        {
+          if ((dir[i].DIR_Attr == 0x01 || dir[i].DIR_Attr == 0x10 || dir[i].DIR_Attr == 0x20 || dir[i].DIR_Attr == 0x30) && dir[i].DIR_Name[0] != 0xffffffe5)
+          {
+            strncpy(token, dir[i].DIR_Name, 11);
+            printf("%s\n", token);
+          }
+          i++;
+        }
       }
-      else if(strcmp("cd",token[0])==0)
+      else if (strcmp("cd", token[0]) == 0)
       {
-
       }
-      else if(strcmp("get",token[0])==0)
+      else if (strcmp("get", token[0]) == 0)
       {
-
       }
-      else if(strcmp("read",token[0])==0)
+      else if (strcmp("read", token[0]) == 0)
       {
-
       }
     }
     else
