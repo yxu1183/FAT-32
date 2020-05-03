@@ -223,7 +223,7 @@ int main()
 
     else if (strcmp("exit", token[0]) == 0)
     {
-      if(open_file == 1)
+      if (open_file == 1)
       {
         fclose(ptr_file);
       }
@@ -291,7 +291,7 @@ int main()
           }
           if (find == 0)
           {
-            printf("Didn't find the file %s.\n", token[1]);
+            printf("Error: File not found.\n");
           }
         }
         else
@@ -303,14 +303,14 @@ int main()
       else if (strcmp("ls", token[0]) == 0)
       {
         int i = 0;
-        char token[0];
-        memset(&token, 0, 12);
+        char word[12];
+        memset(&word, 0, 12);
         while (i < 16)
         {
           if ((dir[i].DIR_Attr == 0x01 || dir[i].DIR_Attr == 0x10 || dir[i].DIR_Attr == 0x20 || dir[i].DIR_Attr == 0x30) && dir[i].DIR_Name[0] != 0xffffffe5)
           {
-            strncpy(token, dir[i].DIR_Name, 11);
-            printf("%s\n", token);
+            strncpy(word, dir[i].DIR_Name, 11);
+            printf("%s\n", word);
           }
           i++;
         }
