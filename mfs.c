@@ -1,3 +1,10 @@
+/*
+  Assignment 4 - FAT32
+  Team Members:
+    -> Yunika Upadhayaya, ID:1001631183
+    -> Suman Thapa Magar, ID:1001643016
+*/
+
 #define _GNU_SOURCE
 
 #include <stdio.h>
@@ -53,7 +60,9 @@ int open_file = 0;
 
 int LBAToOffset(int sector)
 {
-  return ((sector - 2) * BPB_BytesPerSec) + (BPB_BytesPerSec * BPB_RsvdSecCnt) + (BPB_NumFATs * BPB_FATSz32 * BPB_BytesPerSec);
+  return ((sector - 2) * BPB_BytesPerSec) +
+         (BPB_BytesPerSec * BPB_RsvdSecCnt) +
+         (BPB_NumFATs * BPB_FATSz32 * BPB_BytesPerSec);
 }
 
 int compare(char IMG_Name[], char input[])
@@ -216,7 +225,8 @@ int main()
           fseek(ptr_file, 36, SEEK_SET);
           fread(&BPB_FATSz32, 1, 4, ptr_file);
 
-          root_address = (BPB_BytesPerSec * BPB_RsvdSecCnt) + (BPB_NumFATs * BPB_FATSz32 * BPB_BytesPerSec);
+          root_address = (BPB_BytesPerSec * BPB_RsvdSecCnt) +
+                         (BPB_NumFATs * BPB_FATSz32 * BPB_BytesPerSec);
 
           fseek(ptr_file, root_address, SEEK_SET);
           int i = 0;
@@ -308,7 +318,8 @@ int main()
         else
         {
           printf("Attribute\tSize\tStarting Cluster Number\n");
-          printf("%d\t\t%d\t%d\n\n", dir[index_counter].DIR_Attr, dir[index_counter].DIR_FileSize, dir[index_counter].DIR_FirstClusterLow);
+          printf("%d\t\t%d\t%d\n\n", dir[index_counter].DIR_Attr,
+                 dir[index_counter].DIR_FileSize, dir[index_counter].DIR_FirstClusterLow);
         }
         continue;
       }
@@ -319,7 +330,11 @@ int main()
         memset(&word, 0, 12);
         while (i < 16)
         {
-          if ((dir[i].DIR_Attr == 0x01 || dir[i].DIR_Attr == 0x10 || dir[i].DIR_Attr == 0x20 || dir[i].DIR_Attr == 0x30) && dir[i].DIR_Name[0] != (signed char)0xe5)
+          if ((dir[i].DIR_Attr == 0x01 ||
+               dir[i].DIR_Attr == 0x10 ||
+               dir[i].DIR_Attr == 0x20 ||
+               dir[i].DIR_Attr == 0x30) &&
+              dir[i].DIR_Name[0] != (signed char)0xe5)
           {
             strncpy(word, dir[i].DIR_Name, 11);
             printf("%s\n", word);
@@ -390,14 +405,15 @@ int main()
       {
         if (token[1] == NULL)
         {
-          printf("\n Please enter the name of the file in the following format: get <filename>\n");
+          printf("Please enter the name of the file in the following format: 
+                  get <filename>.\n");
         }
         else
         {
           int index_counter = match(dir, token[1]);
           if (index_counter == -2)
           {
-            printf("\nError: File not found\n");
+            printf("Error: File not found.\n");
           }
           else
           {
@@ -415,22 +431,22 @@ int main()
       }
       else if (strcmp("read", token[0]) == 0)
       {
-        if(token[1]==NULL || token[2] ==NULL || token[3]==NULL)
+        if (token[1] == NULL || token[2] == NULL || token[3] == NULL)
         {
-          printf("Please enter the file to read in the following format: read <filename> <position> <number of bytes> \n");
-
+          printf("Please enter the file to read in the following format: 
+                  read <filename> <position> <number of bytes>.\n");
         }
         else
         {
-          int index_counter= match(dir,token[1]);
-          if(index_counter==-2)
+          int index_counter = match(dir, token[1]);
+          if (index_counter == -2)
           {
-            printf("Error: File not found \n");
+            printf("Error: File not found.\n");
           }
           else
           {
             int position = atoi(token[2]);
-            int NumOfBytes= atoi(token[3]);
+            int NumOfBytes = atoi(token[3]);
 
             int cluster = dir[index_counter].DIR_FirstClusterLow;
 
@@ -438,9 +454,9 @@ int main()
 
             char *temp_str = malloc(NumOfBytes);
 
-            fread(temp_str,NumOfBytes,1,ptr_file);
+            fread(temp_str, NumOfBytes, 1, ptr_file);
 
-            printf("%s\n",temp_str);
+            printf("%s\n", temp_str);
 
             free(temp_str);
           }
