@@ -7,6 +7,7 @@
 
 #define _GNU_SOURCE
 
+//Require header files
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/wait.h>
@@ -42,6 +43,7 @@ struct __attribute__((__packed__)) DirectoryEntry
 
 FILE *ptr_file;
 
+//These section holds the information for reserved section
 char BS_OEMName[8];
 int16_t BPB_BytesPerSec;
 int8_t BPB_SecPerClus;
@@ -56,8 +58,11 @@ int32_t RootDirSectors = 0;
 int32_t FirstDataSector = 0;
 int32_t FirstSectorofCluster = 0;
 int32_t root_address;
+
+//Checks if the file is open or not.
 int open_file = 0;
 
+//Professor's code to check the LBAToOffset.
 int LBAToOffset(int sector)
 {
   return ((sector - 2) * BPB_BytesPerSec) +
@@ -65,6 +70,8 @@ int LBAToOffset(int sector)
          (BPB_NumFATs * BPB_FATSz32 * BPB_BytesPerSec);
 }
 
+//Professor's code to compare the filename.
+//Compares filename like bar.txt with BAR    TXT
 int compare(char IMG_Name[], char input[])
 {
   char expanded_name[12];
@@ -108,6 +115,9 @@ int compare(char IMG_Name[], char input[])
   return 0;
 }
 
+//This function checks if the file directory exists.
+//If the file exits, it returns back its index.
+//Takes in struct dir and file directory as input.
 int match(struct DirectoryEntry dir[], char token[])
 {
   int index = 0;
@@ -129,6 +139,7 @@ int match(struct DirectoryEntry dir[], char token[])
 
 int main()
 {
+  //A struct to hold all the attributes of the directory.
   struct DirectoryEntry dir[16];
 
   char *cmd_str = (char *)malloc(MAX_COMMAND_SIZE);
@@ -174,22 +185,16 @@ int main()
       token_count++;
     }
 
-    // Now print the tokenized input as a debug check
-    // \TODO Remove this code and replace with your shell functionality
-
-    // int token_index  = 0;
-    // for( token_index = 0; token_index < token_count; token_index ++ )
-    // {
-    //   printf("token[%d] = %s\n", token_index, token[token_index] );
-    // }
-
+    //Continues if there is no user input, this checks for fragmentation
     if (token[0] == NULL)
     {
       continue;
     }
 
+    //opens the file
     else if (strcmp("open", token[0]) == 0)
     {
+      //Check if there is no file name
       if (token[1] == NULL)
       {
         printf("Error: Please enter the name of file to open.\n");
@@ -198,11 +203,13 @@ int main()
       else
       {
         ptr_file = fopen(token[1], "r");
+        //Check if the given file name exists
         if (ptr_file == NULL)
         {
           printf("Error: File system image not found.\n");
           continue;
         }
+        //Check if the file is already open
         else if (open_file == 1)
         {
           printf("Error: File system image already open.\n");
@@ -210,6 +217,7 @@ int main()
         }
         else
         {
+          //Read in from the file
           fseek(ptr_file, 11, SEEK_SET);
           fread(&BPB_BytesPerSec, 2, 1, ptr_file);
 
@@ -241,6 +249,7 @@ int main()
       }
     }
 
+    //Closes the file that is open
     else if (strcmp("close", token[0]) == 0)
     {
       if (open_file == 1)
@@ -257,6 +266,7 @@ int main()
       continue;
     }
 
+    //Exits from the mfs shell
     else if (strcmp("exit", token[0]) == 0)
     {
       if (open_file == 1)
@@ -267,6 +277,7 @@ int main()
       break;
     }
 
+    //info, stat, ls, get, cd, read works only when the fat32 image is open.
     else if (((strcmp("info", token[0]) == 0) || (strcmp("stat", token[0]) == 0) ||
               (strcmp("ls", token[0]) == 0) || (strcmp("cd", token[0]) == 0) ||
               (strcmp("get", token[0]) == 0) || (strcmp("read", token[0]) == 0)) &&
@@ -280,6 +291,7 @@ int main()
               (strcmp("get", token[0]) == 0) || (strcmp("read", token[0]) == 0)) &&
              (open_file == 1))
     {
+      //Prints out all the information abou the fat32 image file.
       if (strcmp("info", token[0]) == 0)
       {
         printf("BPB_BytesPerSec : %d\n", BPB_BytesPerSec);
@@ -304,6 +316,9 @@ int main()
 
         continue;
       }
+
+      //Prints out the attribute, size, and lower cluster number
+      //for the specified folder or file.
       else if (strcmp("stat", token[0]) == 0)
       {
         if (token[1] == NULL)
@@ -323,6 +338,9 @@ int main()
         }
         continue;
       }
+
+      //Implementing ls function
+      //List downs the files from a current directory when fat32 image file is open.
       else if (strcmp("ls", token[0]) == 0)
       {
         int i = 0;
@@ -330,6 +348,8 @@ int main()
         {
           char word[12];
           memset(&word, 0, 12);
+          //Checks if the fils are read only, subdirectories, 0X30.
+          //Does not print the deleted file (signed char)0Xe5.
           if ((dir[i].DIR_Attr == 0x01 ||
                dir[i].DIR_Attr == 0x10 ||
                dir[i].DIR_Attr == 0x20 ||
@@ -343,6 +363,10 @@ int main()
         }
         continue;
       }
+
+      //Implementing cd function.
+      //Supports absolute and relative path.
+      //Changes the directory as directed.
       else if (strcmp("cd", token[0]) == 0)
       {
         int find = 0;
@@ -353,12 +377,17 @@ int main()
         else
         {
           int counter = 0;
+          //Using strcmp to check if there is "." or "..".
           if (!strcmp(token[1], "..") || !strcmp(token[1], "."))
           {
             while (counter < 16)
             {
+              //Compare function didn't work for "." and "..",
+              //so using strstr to compare.
               if (strstr(dir[counter].DIR_Name, token[1]) != NULL)
               {
+                //We need to set the cluster 20 2, if our parent
+                //and roor directory are same.
                 if (dir[counter].DIR_FirstClusterLow == 0)
                 {
                   dir[counter].DIR_FirstClusterLow = 2;
@@ -376,6 +405,8 @@ int main()
           }
           else
           {
+            //Using compare function to compare the file name
+            // and implemented cd.
             while (counter < 16)
             {
               char word[100];
@@ -401,11 +432,15 @@ int main()
         }
         continue;
       }
+
+      //Get functions reads all the contents from the files in
+      //fat32 image system and write that files into our local directory.
       else if (strcmp("get", token[0]) == 0)
       {
         if (token[1] == NULL)
         {
-          printf("Please enter the name of the file in the following format: get <filename>.\n");
+          printf("Please enter the name of the file in the ");
+          printf("following format: get <filename>.\n");
         }
         else
         {
@@ -428,11 +463,16 @@ int main()
           }
         }
       }
+
+      //Read function: read <filename> <position> <bytes>
+      //Outputs the content of the file from that position
+      //to the total number of bytes specified.
       else if (strcmp("read", token[0]) == 0)
       {
         if (token[1] == NULL || token[2] == NULL || token[3] == NULL)
         {
-          printf("Please enter the file to read in the following format: read <filename> <position> <number of bytes>.\n");
+          printf("Please enter the file to read in the following format: ");
+          printf("read <filename> <position> <number of bytes>.\n");
         }
         else
         {
@@ -461,6 +501,7 @@ int main()
         }
       }
     }
+    //Any other comments- except for open, close, stat, info, ls, cd, get, reead.
     else
     {
       printf("Error: Invalid Command.\n");
