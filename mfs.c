@@ -476,15 +476,16 @@ int main()
         }
         else
         {
-          int index_counter = match(dir, token[1]);
-          if (index_counter == -2)
+          int index_counter= match(dir,token[1]);
+          if(index_counter==-2)
           {
-            printf("Error: File not found.\n");
+            printf("Error: File not found \n");
+
           }
           else
           {
             int position = atoi(token[2]);
-            int NumOfBytes = atoi(token[3]);
+            int NumOfBytes= atoi(token[3]);
 
             int cluster = dir[index_counter].DIR_FirstClusterLow;
 
@@ -492,11 +493,12 @@ int main()
 
             char *temp_str = malloc(NumOfBytes);
 
-            fread(temp_str, NumOfBytes, 1, ptr_file);
+            fread(temp_str,NumOfBytes,1,ptr_file);
 
-            printf("%s\n", temp_str);
+            printf("%s\n",temp_str);
 
             free(temp_str);
+
           }
         }
       }
