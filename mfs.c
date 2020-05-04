@@ -326,10 +326,10 @@ int main()
       else if (strcmp("ls", token[0]) == 0)
       {
         int i = 0;
-        char word[12];
-        memset(&word, 0, 12);
         while (i < 16)
         {
+          char word[12];
+          memset(&word, 0, 12);
           if ((dir[i].DIR_Attr == 0x01 ||
                dir[i].DIR_Attr == 0x10 ||
                dir[i].DIR_Attr == 0x20 ||
@@ -405,8 +405,7 @@ int main()
       {
         if (token[1] == NULL)
         {
-          printf("Please enter the name of the file in the following format: 
-                  get <filename>.\n");
+          printf("Please enter the name of the file in the following format: get <filename>.\n");
         }
         else
         {
@@ -433,8 +432,7 @@ int main()
       {
         if (token[1] == NULL || token[2] == NULL || token[3] == NULL)
         {
-          printf("Please enter the file to read in the following format: 
-                  read <filename> <position> <number of bytes>.\n");
+          printf("Please enter the file to read in the following format: read <filename> <position> <number of bytes>.\n");
         }
         else
         {
