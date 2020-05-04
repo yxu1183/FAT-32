@@ -9,7 +9,6 @@
 #include <signal.h>
 #include <ctype.h>
 #include <stdint.h>
-#include <stdbool.h>
 
 #define WHITESPACE " \t\n" // We want to split our command line up into tokens \
                            // so we need to define what delimits our tokens.   \
@@ -389,9 +388,34 @@ int main()
       }
       else if (strcmp("get", token[0]) == 0)
       {
+        if (token[1] == NULL)
+        {
+          printf("\n Please enter the name of the file in the following format: get <filename>\n");
+        }
+        else
+        {
+          int index_counter = match(dir, token[1]);
+          if (index_counter == -2)
+          {
+            printf("\nError: File not found\n");
+          }
+          else
+          {
+            int cluster = dir[index_counter].DIR_FirstClusterLow;
+            int size = dir[index_counter].DIR_FileSize;
+            FILE *file_ptr = fopen(token[1], "w");
+            fseek(ptr_file, LBAToOffset(cluster), SEEK_SET);
+            char *temp_ptr = malloc(size);
+            fread(temp_ptr, size, 1, ptr_file);
+            fwrite(temp_ptr, size, 1, file_ptr);
+            free(temp_ptr);
+            fclose(file_ptr);
+          }
+        }
       }
       else if (strcmp("read", token[0]) == 0)
       {
+        
       }
     }
     else
