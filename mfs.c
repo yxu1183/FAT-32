@@ -320,7 +320,7 @@ int main()
         memset(&word, 0, 12);
         while (i < 16)
         {
-          if ((dir[i].DIR_Attr == 0x01 || dir[i].DIR_Attr == 0x10 || dir[i].DIR_Attr == 0x20 || dir[i].DIR_Attr == 0x30) && dir[i].DIR_Name[0] != 0xffffffe5)
+          if ((dir[i].DIR_Attr == 0x01 || dir[i].DIR_Attr == 0x10 || dir[i].DIR_Attr == 0x20 || dir[i].DIR_Attr == 0x30) && dir[i].DIR_Name[0] != (signed char)0xe5)
           {
             strncpy(word, dir[i].DIR_Name, 11);
             printf("%s\n", word);
@@ -331,42 +331,61 @@ int main()
       }
       else if (strcmp("cd", token[0]) == 0)
       {
-        int i;
-        // Compare function causes a segfault if passed in . or .. so use strstr instead.
-        if (!strcmp(token[1], ".") || !strcmp(token[1], ".."))
+        int find = 0;
+        if (token[1] == NULL)
         {
-          for (i = 0; i < 16; i++)
-          {
-            if (strstr(dir[i].DIR_Name, token[1]) != NULL)
-            {
-              // If the parent directory is the root directory, set the low cluster to 2.
-              if (dir[i].DIR_FirstClusterLow == 0)
-              {
-                dir[i].DIR_FirstClusterLow = 2;
-              }
-
-              fseek(ptr_file, LBAToOffset(dir[i].DIR_FirstClusterLow), SEEK_SET);
-              fread(&dir[0], sizeof(struct DirectoryEntry), 16, ptr_file);
-              break;
-            }
-          }
+          printf("Error: Please enter the name of the directory.\n");
         }
-
         else
         {
-          for (i = 0; i < 16; i++)
+          int counter = 0;
+          if (!strcmp(token[1], "..") || !strcmp(token[1], "."))
           {
-            char temp[100];
-            strcpy(temp, token[1]);
-
-            if (compare(dir[i].DIR_Name, temp) && dir[i].DIR_Attr != 0x20)
+            while (counter < 16)
             {
-              fseek(ptr_file, LBAToOffset(dir[i].DIR_FirstClusterLow), SEEK_SET);
-              fread(&dir[0], sizeof(struct DirectoryEntry), 16, ptr_file);
-              break;
+              if (strstr(dir[counter].DIR_Name, token[1]) != NULL)
+              {
+                if (dir[counter].DIR_FirstClusterLow == 0)
+                {
+                  dir[counter].DIR_FirstClusterLow = 2;
+                }
+                fseek(ptr_file, LBAToOffset(dir[counter].DIR_FirstClusterLow), SEEK_SET);
+                int i = 0;
+                for (i = 0; i < 16; i++)
+                {
+                  fread(&dir[i], sizeof(dir[i]), 1, ptr_file);
+                }
+                break;
+              }
+              counter++;
+            }
+          }
+          else
+          {
+            while (counter < 16)
+            {
+              char word[100];
+              strncpy(word, token[1], strlen(token[1]));
+              if (dir[counter].DIR_Attr != 0x20 && compare(dir[counter].DIR_Name, word))
+              {
+                fseek(ptr_file, LBAToOffset(dir[counter].DIR_FirstClusterLow), SEEK_SET);
+                int i = 0;
+                for (i = 0; i < 16; i++)
+                {
+                  fread(&dir[i], sizeof(dir[i]), 1, ptr_file);
+                }
+                find = 1;
+                break;
+              }
+              counter++;
+            }
+            if (find == 0)
+            {
+              printf("Error: No such file or directory.\n");
             }
           }
         }
+        continue;
       }
       else if (strcmp("get", token[0]) == 0)
       {
