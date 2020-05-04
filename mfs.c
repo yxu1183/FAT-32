@@ -9,6 +9,7 @@
 #include <signal.h>
 #include <ctype.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #define WHITESPACE " \t\n" // We want to split our command line up into tokens \
                            // so we need to define what delimits our tokens.   \
@@ -19,7 +20,7 @@
 
 #define MAX_NUM_ARGUMENTS 5 // Mav shell only supports five arguments
 
-#define MAX_SIZE_FILE 50
+#define MAX_SIZE_FILE 16
 
 /* struct declaration for Directory*/
 struct __attribute__((__packed__)) DirectoryEntry
@@ -49,8 +50,6 @@ int32_t RootDirSectors = 0;
 int32_t FirstDataSector = 0;
 int32_t FirstSectorofCluster = 0;
 int32_t root_address;
-//char file_open[MAX_SIZE_FILE][MAX_COMMAND_SIZE];
-//int file_counter = 0;
 int open_file = 0;
 
 int LBAToOffset(int sector)
@@ -58,14 +57,25 @@ int LBAToOffset(int sector)
   return ((sector - 2) * BPB_BytesPerSec) + (BPB_BytesPerSec * BPB_RsvdSecCnt) + (BPB_NumFATs * BPB_FATSz32 * BPB_BytesPerSec);
 }
 
-int compare(char *IMG_Name, char *input)
+int compare(char IMG_Name[], char input[])
 {
   char expanded_name[12];
   memset(expanded_name, ' ', 12);
 
-  char *token = strtok(input, ".");
+  char temp[12];
 
-  strncpy(expanded_name, token, strlen(token));
+  strcpy(temp, input);
+
+  char *token = strtok(temp, ".");
+
+  if (token == NULL)
+  {
+    strncpy(expanded_name, "..", strlen(".."));
+  }
+  else
+  {
+    strncpy(expanded_name, token, strlen(token));
+  }
 
   token = strtok(NULL, ".");
 
@@ -86,10 +96,27 @@ int compare(char *IMG_Name, char *input)
   {
     return 1;
   }
-  else
+
+  return 0;
+}
+
+int match(struct DirectoryEntry dir[], char token[])
+{
+  int index = 0;
+  while (index < MAX_SIZE_FILE)
   {
-    return 0;
+    if ((dir[index].DIR_Name[0] != 0xffffffe5) &&
+        (compare(dir[index].DIR_Name, token)) &&
+        (dir[index].DIR_Attr == 0x01 ||
+         dir[index].DIR_Attr == 0x10 ||
+         dir[index].DIR_Attr == 0x20 ||
+         dir[index].DIR_Name[0] == 0x2e))
+    {
+      return index;
+    }
+    index++;
   }
+  return -2;
 }
 
 int main()
@@ -270,51 +297,19 @@ int main()
       }
       else if (strcmp("stat", token[0]) == 0)
       {
-        if (token[1] != NULL)
+        if (token[1] == NULL)
         {
-          int i = 0;
-          int compare_value = -1;
-          while (i < 16)
-          {
-            if (dir[i].DIR_Attr == 0x10 || dir[i].DIR_Attr == 0x20 || dir[i].DIR_Attr == 0x01)
-            {
-              char word[100];
-              strncpy(word, token[1], strlen(token[1]));
-
-              // if (!strcmp(token[1], ".") || !strcmp(token[1], ".."))
-              // {
-              //   if (strstr(dir[i].DIR_Name, token[1]) != NULL)
-              //   {
-              //     // If the parent directory is the root directory, set the low cluster to 2.
-              //     if (dir[i].DIR_FirstClusterLow == 0)
-              //     {
-              //       dir[i].DIR_FirstClusterLow = 2;
-              //     }
-
-              //     printf("DIR_Name: %22s\nDIR_Attr: %13d\nDIR_FirstClusterLow: %d\nDIR_FileSize: %11d\n", temp2, dir[i].DIR_Attr, dir[i].DIR_FirstClusterLow, dir[i].DIR_FileSize);
-              //     found = 1;
-              //     break;
-              //   }
-              // }
-
-              if (compare(dir[i].DIR_Name, word))
-              {
-                printf("Attribute\tSize\tStarting Cluster Number\n");
-                printf("%d\t\t%d\t%d\n\n", dir[i].DIR_Attr, dir[i].DIR_FileSize, dir[i].DIR_FirstClusterLow);
-                compare_value = 1;
-              }
-            }
-            i++;
-          }
-
-          if (compare_value == -1)
-          {
-            printf("Error: File not found.\n");
-          }
+          printf("Please specify the name of the directory.\n");
+        }
+        int index_counter = match(dir, token[1]);
+        if (index_counter == -2)
+        {
+          printf("Error: File not found.\n");
         }
         else
         {
-          printf("Error: Please enter file name or dir name!\n");
+          printf("Attribute\tSize\tStarting Cluster Number\n");
+          printf("%d\t\t%d\t%d\n\n", dir[index_counter].DIR_Attr, dir[index_counter].DIR_FileSize, dir[index_counter].DIR_FirstClusterLow);
         }
         continue;
       }
@@ -336,6 +331,42 @@ int main()
       }
       else if (strcmp("cd", token[0]) == 0)
       {
+        int i;
+        // Compare function causes a segfault if passed in . or .. so use strstr instead.
+        if (!strcmp(token[1], ".") || !strcmp(token[1], ".."))
+        {
+          for (i = 0; i < 16; i++)
+          {
+            if (strstr(dir[i].DIR_Name, token[1]) != NULL)
+            {
+              // If the parent directory is the root directory, set the low cluster to 2.
+              if (dir[i].DIR_FirstClusterLow == 0)
+              {
+                dir[i].DIR_FirstClusterLow = 2;
+              }
+
+              fseek(ptr_file, LBAToOffset(dir[i].DIR_FirstClusterLow), SEEK_SET);
+              fread(&dir[0], sizeof(struct DirectoryEntry), 16, ptr_file);
+              break;
+            }
+          }
+        }
+
+        else
+        {
+          for (i = 0; i < 16; i++)
+          {
+            char temp[100];
+            strcpy(temp, token[1]);
+
+            if (compare(dir[i].DIR_Name, temp) && dir[i].DIR_Attr != 0x20)
+            {
+              fseek(ptr_file, LBAToOffset(dir[i].DIR_FirstClusterLow), SEEK_SET);
+              fread(&dir[0], sizeof(struct DirectoryEntry), 16, ptr_file);
+              break;
+            }
+          }
+        }
       }
       else if (strcmp("get", token[0]) == 0)
       {
