@@ -415,7 +415,36 @@ int main()
       }
       else if (strcmp("read", token[0]) == 0)
       {
-        
+        if(token[1]==NULL || token[2] ==NULL || token[3]==NULL)
+        {
+          printf("Please enter the file to read in the following format: read <filename> <position> <number of bytes> \n");
+
+        }
+        else
+        {
+          int index_counter= match(dir,token[1]);
+          if(index_counter==-2)
+          {
+            printf("Error: File not found \n");
+          }
+          else
+          {
+            int position = atoi(token[2]);
+            int NumOfBytes= atoi(token[3]);
+
+            int cluster = dir[index_counter].DIR_FirstClusterLow;
+
+            fseek(ptr_file, position + LBAToOffset(cluster), SEEK_SET);
+
+            char *temp_str = malloc(NumOfBytes);
+
+            fread(temp_str,NumOfBytes,1,ptr_file);
+
+            printf("%s\n",temp_str);
+
+            free(temp_str);
+          }
+        }
       }
     }
     else
